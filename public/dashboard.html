@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body class="">
+    <div class="flex flex-col min-h-screen">
+      <!-- Header -->
+      <header
+        class="flex items-center justify-between px-6 py-4 bg-background border-b w-full"
+      >
+        <div class="flex justify-between items-center w-full">
+          <h1 class="text-2xl font-bold">Bienvenido al Dashboard</h1>
+          <div className="flex items-center space-x-4">
+            <a href="/users" class="hover:font-bold hover:underline py-2 px-4"
+              >Usuarios</a
+            >
+            <button
+              id="logoutButton"
+              class="bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-1 p-6">
+        <button
+          id="downloadExcel"
+          class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-400"
+        >
+          Descargar Excel
+        </button>
+        <h2 id="hojaNombre" class="text-2xl font-semibold mb-4">Cargando...</h2>
+        <div id="table-container" class="space-y-4 overflow-auto">
+          <!-- Los datos del usuario se cargarán aquí -->
+        </div>
+        <div class="flex justify-between items-center mt-4">
+          <button
+            id="prevPage"
+            class="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span id="pageInfo"></span>
+          <button
+            id="nextPage"
+            class="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+          >
+            Siguiente
+          </button>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="bg-gray-800 text-white p-4 text-center">
+        &copy; 2024 IMPLEMENTACIÓN - SIFODS
+      </footer>
+    </div>
+
+    <script>
+      document.getElementById("downloadExcel").addEventListener("click", () => {
+        const token = localStorage.getItem("token");
+
+        // Redirigir para descargar el archivo
+        fetch("/download-excel", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // Incluye el token en la solicitud
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              return response.blob();
+            }
+            throw new Error("Error al generar el archivo Excel");
+          })
+          .then((blob) => {
+            // Crear una URL para el archivo y simular la descarga
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "datos.xlsx";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          })
+          .catch((error) => {
+            console.error(error);
+            showErrorModal("Error al descargar el archivo Excel.");
+          });
+      });
+
+      // Función para mostrar el modal de error con SweetAlert2
+      function showErrorModal(message) {
+        Swal.fire({
+          title: "Error",
+          text: message,
+          icon: "error",
+          confirmButtonText: "Cerrar",
+        });
+      }
+      // Función para cerrar sesión
+      document.getElementById("logoutButton").addEventListener("click", () => {
+        localStorage.removeItem("token"); // Elimina el token
+        window.location.href = "/"; // Redirige al login
+      });
+
+      let currentPage = 1;
+      const rowsPerPage = 10; // Cambia según tu preferencia
+
+      async function fetchData(page = 1) {
+        try {
+          const response = await fetch(
+            `/data?page=${page}&limit=${rowsPerPage}`
+          );
+          const { hoja, datos, total } = await response.json();
+
+          // Mostrar el nombre de la hoja
+          document.getElementById(
+            "hojaNombre"
+          ).textContent = `Datos de la hoja: ${hoja}`;
+
+          // Actualizar tabla
+          renderTable(datos);
+
+          // Actualizar información de paginación
+          updatePagination(total, page);
+        } catch (error) {
+          console.error("Error al cargar datos:", error);
+          document.getElementById("table-container").innerHTML =
+            '<p class="text-red-500">Error al cargar los datos.</p>';
+        }
+      }
+
+      function renderTable(data) {
+        if (!data || !data.length) {
+          document.getElementById("table-container").innerHTML =
+            '<p class="text-gray-500">No hay datos disponibles.</p>';
+          return;
+        }
+
+        const table = `
+  <div class="overflow-x-auto">
+    <table class="min-w-full table-auto border-collapse border border-gray-300">
+      <thead>
+        <tr class="bg-gray-800 text-white text-left text-sm leading-tight">
+          ${data[0]
+            .map(
+              (header) =>
+                `<th class="border px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px] hover:bg-gray-700" title="${header}">${header}</th>`
+            )
+            .join("")}
+        </tr>
+      </thead>
+      <tbody class="text-sm text-gray-700">
+        ${data
+          .slice(1)
+          .map(
+            (row, index) =>
+              `<tr class="${
+                index % 2 === 0 ? "bg-gray-100" : "bg-white"
+              } hover:bg-gray-200 transition-all duration-150">
+                ${row
+                  .map(
+                    (cell) =>
+                      `<td class="border px-4 text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px]" title="${
+                        cell || ""
+                      }">${cell || ""}</td>`
+                  )
+                  .join("")}
+              </tr>`
+          )
+          .join("")}
+      </tbody>
+    </table>
+  </div>`;
+
+        document.getElementById("table-container").innerHTML = table;
+      }
+
+      function updatePagination(totalRows, currentPage) {
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+        const pageInfo = document.getElementById("pageInfo");
+        const prevButton = document.getElementById("prevPage");
+        const nextButton = document.getElementById("nextPage");
+
+        // Actualizar texto de paginación
+        pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+
+        // Habilitar/deshabilitar botones según la página
+        prevButton.disabled = currentPage <= 1;
+        nextButton.disabled = currentPage >= totalPages;
+
+        // Asignar eventos a los botones
+        prevButton.onclick = () => {
+          if (currentPage > 1) {
+            currentPage -= 1;
+            fetchData(currentPage);
+          }
+        };
+
+        nextButton.onclick = () => {
+          if (currentPage < totalPages) {
+            currentPage += 1;
+            fetchData(currentPage);
+          }
+        };
+      }
+
+      // Inicializar
+      fetchData();
+    </script>
+  </body>
+</html>

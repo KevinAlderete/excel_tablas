@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-200 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto p-6 bg-white rounded-lg shadow-lg w-96">
+      <h1 class="text-2xl font-bold text-center mb-6">Iniciar Sesión</h1>
+      <form id="loginForm">
+        <div class="mb-4">
+          <label for="email" class="block text-sm font-semibold"
+            >Correo electrónico</label
+          >
+          <input
+            type="email"
+            id="email"
+            class="w-full p-2 border rounded mt-1"
+            required
+          />
+        </div>
+        <div class="mb-6">
+          <label for="password" class="block text-sm font-semibold"
+            >Contraseña</label
+          >
+          <input
+            type="password"
+            id="password"
+            class="w-full p-2 border rounded mt-1"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          class="w-full bg-blue-500 text-white py-2 rounded"
+        >
+          Iniciar Sesión
+        </button>
+      </form>
+    </div>
+
+    <script>
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+
+          const response = await fetch("/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const result = await response.json();
+          if (response.ok) {
+            alert("Login exitoso");
+            localStorage.setItem("token", result.token); // Guardar el token
+            window.location.href = "/dashboard"; // Redirigir a la página de datos
+          } else {
+            alert(result.error);
+          }
+        });
+    </script>
+  </body>
+</html>

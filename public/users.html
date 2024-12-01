@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      #createUserModal {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 500px;
+        width: 100%;
+      }
+      button {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="">
+    <div class="min-h-screen flex flex-col">
+      <!-- Header -->
+      <header
+        class="flex items-center justify-between px-6 py-4 bg-background border-b w-full"
+      >
+        <div class="flex justify-between items-center w-full">
+          <h1 class="text-2xl font-bold">Panel de administración</h1>
+          <div className="flex items-center space-x-4">
+            <a
+              href="/dashboard"
+              class="hover:font-bold hover:underline py-2 px-4"
+              >Atras</a
+            >
+            <button
+              id="logoutButton"
+              class="bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-grow p-6">
+        <h2 class="text-xl mb-4">Gestión de Usuarios</h2>
+        <!-- Botón para abrir el modal -->
+        <button
+          onclick="openModal()"
+          class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+        >
+          Crear Nuevo Usuario
+        </button>
+        <div id="table-container" class="space-y-4">
+          <!-- Aquí se mostrarán los usuarios existentes -->
+        </div>
+
+        <!-- El modal -->
+        <div
+          id="createUserModal"
+          class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden"
+        >
+          <div class="bg-white p-6 rounded-lg w-96">
+            <h3 class="text-xl font-semibold mb-4">Crear Nuevo Usuario</h3>
+            <form id="createUserForm">
+              <div class="mb-4">
+                <label for="name" class="block">Nombres:</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div class="mb-4">
+                <label for="lastName" class="block">Apellidos:</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div class="mb-4">
+                <label for="userId" class="block">Usuario:</label>
+                <input
+                  type="text"
+                  id="userId"
+                  name="userId"
+                  maxlength="8"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div class="mb-4">
+                <label for="password" class="block">Contraseña:</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div class="mb-4">
+                <label for="sheet" class="block">Hoja asignada:</label>
+                <select
+                  id="sheet"
+                  name="sheet"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                >
+                  <option value="" disabled selected>Seleccione...</option>
+                  <!-- Aquí se llenará con las opciones dinámicamente -->
+                </select>
+              </div>
+              <button
+                type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+              >
+                Crear Usuario
+              </button>
+            </form>
+            <button onclick="closeModal()" class="mt-4 text-red-600">
+              Cerrar
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal para editar usuario -->
+        <div
+          id="editUserModal"
+          class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden"
+        >
+          <div class="bg-white p-6 rounded-lg w-96">
+            <h3 class="text-xl font-semibold mb-4">Editar Usuario</h3>
+            <form id="editUserForm">
+              <div class="mb-4">
+                <label for="editName" class="block">Nombres:</label>
+                <input
+                  type="text"
+                  id="editName"
+                  name="name"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div class="mb-4">
+                <label for="editLastName" class="block">Apellidos:</label>
+                <input
+                  type="text"
+                  id="editLastName"
+                  name="lastName"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div class="mb-4">
+                <label for="editUserId" class="block">Usuario:</label>
+                <input
+                  type="text"
+                  id="editUserId"
+                  name="userId"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  readonly
+                />
+              </div>
+              <div class="mb-4">
+                <label for="editPassword" class="block">Contraseña:</label>
+                <input
+                  type="password"
+                  id="editPassword"
+                  name="password"
+                  class="w-full p-2 border border-gray-300 rounded"
+                />
+              </div>
+              <div class="mb-4">
+                <label for="editSheet" class="block">Hoja asignada:</label>
+                <select
+                  id="editSheet"
+                  name="sheet"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                >
+                  <option value="" disabled selected>Seleccione...</option>
+                  <!-- Opciones dinámicas se llenarán aquí -->
+                </select>
+              </div>
+              <button
+                type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+              >
+                Actualizar Usuario
+              </button>
+            </form>
+            <button onclick="closeEditModal()" class="mt-4 text-red-600">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="bg-gray-800 text-white p-4 text-center">
+        &copy; 2024 Tu Empresa
+      </footer>
+    </div>
+
+    <script>
+      // Manejo del cierre de sesión
+      document.getElementById("logoutButton").addEventListener("click", () => {
+        localStorage.removeItem("token"); // Eliminar token del almacenamiento local
+        window.location.href = "/"; // Redirigir al login
+      });
+
+      // Manejo del formulario para crear un nuevo usuario
+      document
+        .getElementById("createUserForm")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const token = localStorage.getItem("token");
+          const name = document.getElementById("name").value;
+          const lastName = document.getElementById("lastName").value;
+          const userId = document.getElementById("userId").value;
+          const password = document.getElementById("password").value;
+          const sheet = document.getElementById("sheet").value;
+
+          // Verificar si el token está presente
+          if (!token) {
+            showErrorModal("No estás autenticado. Por favor, inicia sesión.");
+            window.location.href = "/login"; // Redirigir al login si no hay token
+            return;
+          }
+
+          const response = await fetch("/users", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ lastName, name, userId, password, sheet }),
+          });
+
+          if (response.ok) {
+            Swal.fire({
+              title: "Éxito",
+              text: "Usuario creado correctamente",
+              icon: "success",
+              confirmButtonText: "Aceptar",
+            });
+            closeModal(); // Cerrar el modal después de enviar el formulario
+          } else {
+            const error = await response.json();
+            showErrorModal(error.error || "Error al crear el usuario");
+          }
+        });
+
+      // Función para mostrar el modal de error con SweetAlert2
+      function showErrorModal(message) {
+        Swal.fire({
+          title: "Error",
+          text: message,
+          icon: "error",
+          confirmButtonText: "Cerrar",
+        });
+      }
+
+      // Obtener nombres de las hojas y poblar el desplegable
+      async function fetchSheetNames() {
+        try {
+          const token = localStorage.getItem("token");
+
+          if (!token) {
+            showErrorModal("No estás autenticado. Por favor, inicia sesión.");
+            window.location.href = "/login"; // Redirigir al login si no hay token
+            return;
+          }
+
+          const response = await fetch("/users/sheets", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+
+            // Llenar el desplegable con los nombres de las hojas
+            const selector = document.getElementById("sheet");
+            data.sheets.forEach((sheet) => {
+              const option = document.createElement("option");
+              option.value = sheet;
+              option.textContent = sheet;
+              selector.appendChild(option);
+            });
+          } else {
+            console.error("Error al cargar las hojas:", await response.text());
+            showErrorModal("Error al obtener los nombres de las hojas.");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          showErrorModal("No se pudieron cargar los nombres de las hojas.");
+        }
+      }
+
+      // Llamar a la función al cargar la página
+      fetchSheetNames();
+
+      // Obtener nombres de las hojas y poblar el desplegable
+      async function fetchSheetNamesEdit() {
+        try {
+          const token = localStorage.getItem("token");
+
+          if (!token) {
+            showErrorModal("No estás autenticado. Por favor, inicia sesión.");
+            window.location.href = "/login"; // Redirigir al login si no hay token
+            return;
+          }
+
+          const response = await fetch("/users/sheets", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+
+            // Llenar el desplegable con los nombres de las hojas
+            const selector = document.getElementById("editSheet");
+            data.sheets.forEach((sheet) => {
+              const option = document.createElement("option");
+              option.value = sheet;
+              option.textContent = sheet;
+              selector.appendChild(option);
+            });
+          } else {
+            console.error("Error al cargar las hojas:", await response.text());
+            showErrorModal("Error al obtener los nombres de las hojas.");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          showErrorModal("No se pudieron cargar los nombres de las hojas.");
+        }
+      }
+      async function fetchUserData() {
+        try {
+          const token = localStorage.getItem("token");
+
+          // Verificar si el token está presente
+          if (!token) {
+            showErrorModal("No estás autenticado. Por favor, inicia sesión.");
+            window.location.href = "/login"; // Redirigir al login si no hay token
+            return;
+          }
+
+          const response = await fetch("/users/data", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+
+            // Validar que los datos estén en el formato correcto
+            if (Array.isArray(data) && data.length > 0) {
+              renderTable(data);
+            } else {
+              showErrorModal("Los datos no tienen el formato esperado.");
+            }
+          } else {
+            showErrorModal("Error al obtener los datos.");
+          }
+        } catch (error) {
+          console.error("Error al cargar datos:", error);
+          showErrorModal("Ocurrió un error al intentar cargar los datos.");
+        }
+      }
+
+      function renderTable(data) {
+        if (!data || data.length === 0) {
+          document.getElementById("table-container").innerHTML =
+            '<p class="text-gray-500">No hay datos disponibles.</p>';
+          return;
+        }
+
+        // Índice de la columna a omitir (por ejemplo, la tercera columna)
+        const columnToSkip = 3;
+
+        // Crear la tabla HTML a partir de los datos
+        const table = `
+        <div class="overflow-x-auto">
+          <table class="min-w-full table-auto border-collapse border border-gray-300">
+            <thead>
+              <tr class="bg-gray-800 text-white text-left text-sm leading-tight">
+                ${data[0]
+                  .filter((_, index) => index !== columnToSkip) // Excluir columna
+                  .map(
+                    (header) =>
+                      `<th class="border px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px]" title="${header}">${header}</th>`
+                  )
+                  .join("")}
+                <th class="border px-4 py-2">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="text-sm text-gray-700">
+              ${data
+                .slice(1) // Filas sin encabezados
+                .map(
+                  (row, index) =>
+                    `<tr class="${
+                      index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                    } hover:bg-gray-200 transition-all duration-150">
+                      ${row
+                        .filter((_, idx) => idx !== columnToSkip) // Excluir columna
+                        .map(
+                          (cell) =>
+                            `<td class="border px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px]" title="${
+                              cell || ""
+                            }">${cell || ""}</td>`
+                        )
+                        .join("")}
+                      <td class="border px-4 py-2 text-center space-x-2">
+                        <button
+                          class="bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-2 rounded transition-all duration-150"
+                          onclick="deleteUser('${row[2]}')">
+                          🗑 Eliminar
+                        </button>
+                        <button
+                          class="bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-2 rounded transition-all duration-150"
+                          onclick="openEditModal('${row[2]}')">
+                          ✏️ Editar
+                        </button>
+                      </td>
+                    </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>`;
+
+        document.getElementById("table-container").innerHTML = table;
+      }
+
+      // Llamar a la función al cargar la página
+      fetchUserData();
+
+      // Abrir el modal
+      function openModal() {
+        document.getElementById("createUserModal").classList.remove("hidden");
+      }
+
+      // Cerrar el modal
+      function closeModal() {
+        document.getElementById("createUserModal").classList.add("hidden");
+      }
+
+      async function deleteUser(userId) {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          alert("No estás autenticado. Por favor, inicia sesión.");
+          window.location.href = "/login";
+          return;
+        }
+
+        const result = await Swal.fire({
+          title: "¿Estás seguro?",
+          text: "No podrás revertir esta acción.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "Sí, eliminar",
+          cancelButtonText: "Cancelar",
+        });
+
+        if (!result.isConfirmed) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/users/${userId}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            Swal.fire({
+              title: "Éxito",
+              text: "Usuario eliminado correctamente.",
+              icon: "success",
+              confirmButtonText: "Aceptar",
+            });
+            fetchUserData();
+          } else {
+            alert("Error al eliminar el usuario.");
+          }
+        } catch (error) {
+          console.error("Error al eliminar usuario:", error);
+          alert("Hubo un error al intentar eliminar al usuario.");
+        }
+      }
+
+      async function openEditModal(userId) {
+        fetchSheetNamesEdit();
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          showErrorModal("No estás autenticado. Por favor, inicia sesión.");
+          window.location.href = "/login"; // Redirigir al login si no hay token
+          return;
+        }
+
+        try {
+          // Obtener los datos del usuario
+          const response = await fetch(`/users/${userId}`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`, // Enviar el token en el encabezado
+            },
+          });
+
+          if (!response.ok) {
+            const textResponse = await response.text();
+            console.error(
+              "Error details (HTML response):",
+              textResponse,
+              userId
+            );
+            throw new Error("Error al cargar los datos del usuario.");
+          }
+
+          const data = await response.json();
+
+          if (data && data.user) {
+            // Llenar el formulario con los datos
+            document.getElementById("editName").value = data.user.name || "";
+            document.getElementById("editLastName").value =
+              data.user.lastName || "";
+            document.getElementById("editUserId").value =
+              data.user.userId || "";
+            document.getElementById("editSheet").value = data.user.sheet || "";
+
+            // Abrir el modal
+            document.getElementById("editUserModal").classList.remove("hidden");
+          } else {
+            throw new Error("Datos de usuario no encontrados.");
+          }
+        } catch (error) {
+          console.error("Error al cargar los datos del usuario:", error);
+          showErrorModal("Error al cargar los datos del usuario");
+        }
+      }
+
+      // Manejo del formulario de edición
+      document
+        .getElementById("editUserForm")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault(); // Prevenir la acción predeterminada (recarga de la página)
+
+          const userId = document.getElementById("editUserId").value; // Asegúrate de tener el userId en el formulario
+          await updateUser(userId); // Llamar a la función para actualizar el usuario
+        });
+
+      // Función para actualizar los datos del usuario
+      async function updateUser(userId) {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          showErrorModal("No estás autenticado. Por favor, inicia sesión.");
+          window.location.href = "/login"; // Redirigir al login si no hay token
+          return;
+        }
+
+        // Obtener los valores de los campos del formulario
+        const name = document.getElementById("editName").value;
+        const lastName = document.getElementById("editLastName").value;
+        const sheet = document.getElementById("editSheet").value;
+        const password = document.getElementById("editPassword").value;
+
+        try {
+          // Realizar la solicitud PUT para actualizar el usuario
+          const response = await fetch(`/users/${userId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ name, lastName, userId, sheet, password }),
+          });
+
+          if (!response.ok) {
+            const textResponse = await response.text();
+            //console.error("Error details (HTML response):", textResponse);
+            throw new Error("Error al actualizar los datos del usuario.");
+          }
+
+          const data = await response.json();
+          Swal.fire({
+            title: "Éxito",
+            text: data.message,
+            icon: "success",
+            confirmButtonText: "Aceptar",
+          });
+
+          //alert(data.message); // Mostrar mensaje de éxito
+
+          // Cerrar el modal
+          document.getElementById("editUserModal").classList.add("hidden");
+          fetchUserData();
+        } catch (error) {
+          //console.error("Error al actualizar el usuario:", error);
+          showErrorModal("Error al actualizar los datos del usuario");
+        }
+      }
+
+      function closeEditModal() {
+        document.getElementById("editUserModal").classList.add("hidden");
+      }
+    </script>
+  </body>
+</html>
