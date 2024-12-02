@@ -5,6 +5,7 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const ExcelJS = require("exceljs");
+const XLSX = require("xlsx");
 require("dotenv").config();
 const session = require("express-session");
 
@@ -58,7 +59,8 @@ app.get("/dashboard", verifyToken, (req, res) => {
 app.get("/users", verifyToken, (req, res) => {
   // Verificar que el usuario sea el administrador
   if (req.user.userId !== "71976532") {
-    return res.status(403).json({ error: "No autorizado" });
+    return res.redirect("/dashboard");
+    //return res.status(403).json({ error: "No autorizado" });
   }
 
   // Enviar el archivo HTML del Dashboard
@@ -170,13 +172,19 @@ app.post("/login", async (req, res) => {
 
 // Middleware para verificar la autenticación
 function verifyToken(req, res, next) {
-  const token = req.session.token;
-  if (!token) return res.status(401).json({ error: "No autorizado" });
+  const token = req.session.token; // Obtenemos el token de la sesión
+  if (!token) {
+    // Si no hay token, redirigir al inicio (login)
+    return res.redirect("/");
+  }
 
   jwt.verify(token, "secret_key", (err, decoded) => {
-    if (err) return res.status(403).json({ error: "Token inválido" });
-    req.user = decoded;
-    next();
+    if (err) {
+      // Si el token es inválido, redirigir al inicio
+      return res.redirect("/");
+    }
+    req.user = decoded; // Asigna los datos decodificados del token al objeto `req.user`
+    next(); // Continúa con la siguiente función middleware
   });
 }
 
@@ -404,53 +412,55 @@ app.get("/users/:userId", verifyToken, async (req, res) => {
   }
 });
 
-// Ruta para actualizar los datos del usuario
-app.put("/users/:userId", verifyToken, async (req, res) => {
-  //console.log("Datos recibidos:", req.body);
-  const { name, lastName, userId, password, sheet } = req.body;
-  const { userId: paramUserId } = req.params;
-  //console.log(name, lastName, userId, password, sheet);
-
-  if (!req.user || req.user.userId !== "71976532") {
-    return res.status(403).json({ error: "No autorizado" });
-  }
-
+app.get("/download-excel", verifyToken, async (req, res) => {
   try {
-    const client = await auth.getClient();
-    const sheets = google.sheets({ version: "v4", auth: client });
+    // Obtén los usuarios y el usuario actual
+    const usuarios = await getSheetData("Usuarios");
+    const usuarioActual = usuarios.find(
+      (usuario) => usuario[2] === req.user.userId
+    );
 
-    // Verificar si el usuario existe en la hoja de Google
-    const readResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: "Usuarios!A2:E",
-    });
-
-    const data = readResponse.data.values;
-    //console.log(data);
-    const userIndex = data.findIndex((row) => row[2] === paramUserId);
-
-    if (userIndex === -1) {
+    if (!usuarioActual) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
-    // Si el usuario existe, actualizamos los datos
-    const hashedPassword = password
-      ? await bcrypt.hash(password, 10)
-      : data[userIndex][3];
+    const nombreHoja = usuarioActual[4];
+    if (!nombreHoja) {
+      return res
+        .status(400)
+        .json({ error: "No se encontró un nombre de hoja para este usuario" });
+    }
 
-    const writeResponse = await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `Usuarios!A${userIndex + 2}:E${userIndex + 2}`,
-      valueInputOption: "RAW",
-      resource: {
-        values: [[name, lastName, userId, hashedPassword, sheet]],
-      },
-    });
+    // Obtén los datos de la hoja
+    const data = await getSheetData(nombreHoja);
+    //console.log(data);
 
-    res.json({ message: "Usuario actualizado correctamente" });
+    if (!data || data.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "No se encontraron datos para la hoja" });
+    }
+
+    // Crear un nuevo libro de trabajo
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(nombreHoja);
+
+    // Agregar los datos al archivo Excel
+    worksheet.addRows(data);
+
+    // Configurar la descarga
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", `attachment; filename=archivo.xlsx`);
+
+    // Escribir el archivo Excel a la respuesta HTTP
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error al actualizar el usuario" });
+    //console.error("Error al generar el archivo Excel:", error);
+    res.status(500).json({ error: "Error al generar el archivo Excel" });
   }
 });
 ///////////////////////////////
@@ -477,25 +487,36 @@ app.get("/download-excel", verifyToken, async (req, res) => {
     // Obtén los datos de la hoja
     const data = await getSheetData(nombreHoja);
     console.log(data);
+
     // Crea un nuevo archivo Excel
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(nombreHoja);
 
     // Agrega encabezados y datos
     if (data.length > 0) {
-      worksheet.addRow(data[0]); // Encabezados
+      // Asegúrate de que los encabezados no tengan valores vacíos
+      const headers = data[0].map((header) => header.trim() || ""); // Eliminar espacios en blanco de los encabezados
+      worksheet.addRow(headers); // Encabezados
+
+      // Agregar las filas de datos
       data.slice(1).forEach((row) => {
-        worksheet.addRow(row); // Filas de datos
+        // Asegúrate de que cada fila tenga datos
+        const cleanRow = row.map((value) => (value ? value : ""));
+        worksheet.addRow(cleanRow); // Filas de datos
       });
 
       // Estiliza el encabezado (opcional)
       worksheet.getRow(1).font = { bold: true };
+
+      // Ajusta el ancho de las columnas
       worksheet.columns.forEach((column) => {
-        column.width =
-          Math.max(
-            ...column.values.map((val) => (val ? val.toString().length : 10))
-          ) + 2;
+        const maxLength = Math.max(
+          ...column.values.map((val) => (val ? val.toString().length : 0))
+        );
+        column.width = maxLength + 2;
       });
+    } else {
+      console.error("Datos no válidos para escribir en Excel:", data);
     }
 
     // Configura la descarga

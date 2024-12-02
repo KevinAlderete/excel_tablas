@@ -8,6 +8,15 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body class="">
+    <div
+      id="loader"
+      class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex flex-col items-center justify-center z-50"
+    >
+      <div
+        class="w-16 h-16 border-4 border-blue-500 border-dotted rounded-full animate-spin mb-4"
+      ></div>
+      <p class="text-white">Cargando, por favor espera...</p>
+    </div>
     <div class="flex flex-col min-h-screen">
       <!-- Header -->
       <header
@@ -32,7 +41,7 @@
       <!-- Main Content -->
       <main class="flex-1 p-6">
         <button
-          id="downloadExcel"
+          id="download-btn"
           class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-400"
         >
           Descargar Excel
@@ -65,35 +74,45 @@
     </div>
 
     <script>
-      document.getElementById("downloadExcel").addEventListener("click", () => {
+      document.getElementById("download-btn").addEventListener("click", () => {
+        // Mostrar el loader
+        const loader = document.getElementById("loader");
+        loader.classList.remove("hidden");
         const token = localStorage.getItem("token");
-
-        // Redirigir para descargar el archivo
         fetch("/download-excel", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`, // Incluye el token en la solicitud
+            Authorization: `Bearer ${token}`, // Reemplaza 'yourToken' con el token real de autenticación
           },
         })
           .then((response) => {
-            if (response.ok) {
-              return response.blob();
+            if (!response.ok) {
+              throw new Error("No se pudo descargar el archivo");
             }
-            throw new Error("Error al generar el archivo Excel");
+            // Crear un objeto Blob con la respuesta (el archivo Excel)
+            return response.blob();
           })
           .then((blob) => {
-            // Crear una URL para el archivo y simular la descarga
+            // Crear un enlace temporal para descargar el archivo
+            const link = document.createElement("a");
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "datos.xlsx";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+            link.href = url;
+            link.download = "archivo.xlsx"; // Nombre del archivo a descargar
+            link.click();
+            // Liberar el objeto URL creado
+            window.URL.revokeObjectURL(url);
+            // Ocultar el loader
+            loader.classList.add("hidden");
+            Swal.fire({
+              title: "Éxito",
+              text: "Excel descargado.",
+              icon: "success",
+              confirmButtonText: "Aceptar",
+            });
           })
           .catch((error) => {
-            console.error(error);
-            showErrorModal("Error al descargar el archivo Excel.");
+            console.error("Error al descargar el archivo:", error);
+            alert("Hubo un problema al descargar el archivo");
           });
       });
 
@@ -115,6 +134,7 @@
       let currentPage = 1;
       const rowsPerPage = 10; // Cambia según tu preferencia
 
+      // Cargar datos de la API
       async function fetchData(page = 1) {
         try {
           const response = await fetch(
@@ -127,8 +147,8 @@
             "hojaNombre"
           ).textContent = `Datos de la hoja: ${hoja}`;
 
-          // Actualizar tabla
-          renderTable(datos);
+          // Actualizar tabla (solo el cuerpo de la tabla)
+          renderTableBody(datos);
 
           // Actualizar información de paginación
           updatePagination(total, page);
@@ -139,52 +159,62 @@
         }
       }
 
-      function renderTable(data) {
+      // Renderizar encabezado una sola vez
+      function renderTableHeader(headers) {
+        const tableHeader = `
+    <div class="overflow-x-auto">
+      <table class="min-w-full table-auto border-collapse border border-gray-300">
+        <thead>
+          <tr class="bg-gray-800 text-white text-left text-sm leading-tight">
+            ${headers
+              .map(
+                (header) =>
+                  `<th class="border px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px] hover:bg-gray-700" title="${header}">${header}</th>`
+              )
+              .join("")}
+          </tr>
+        </thead>
+        <tbody class="text-sm text-gray-700" id="table-body">
+          <!-- Cuerpo de la tabla que se actualizará dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+  `;
+
+        document.getElementById("table-container").innerHTML = tableHeader;
+      }
+
+      // Renderizar el cuerpo de la tabla
+      function renderTableBody(data) {
         if (!data || !data.length) {
-          document.getElementById("table-container").innerHTML =
-            '<p class="text-gray-500">No hay datos disponibles.</p>';
+          document.getElementById("table-body").innerHTML =
+            '<tr><td colspan="100%" class="text-center">No hay datos disponibles.</td></tr>';
           return;
         }
 
-        const table = `
-  <div class="overflow-x-auto">
-    <table class="min-w-full table-auto border-collapse border border-gray-300">
-      <thead>
-        <tr class="bg-gray-800 text-white text-left text-sm leading-tight">
-          ${data[0]
-            .map(
-              (header) =>
-                `<th class="border px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px] hover:bg-gray-700" title="${header}">${header}</th>`
-            )
-            .join("")}
-        </tr>
-      </thead>
-      <tbody class="text-sm text-gray-700">
-        ${data
-          .slice(1)
+        const tableBody = data
+          .slice(0, rowsPerPage) // Limitar los datos a la página actual
           .map(
             (row, index) =>
               `<tr class="${
                 index % 2 === 0 ? "bg-gray-100" : "bg-white"
               } hover:bg-gray-200 transition-all duration-150">
-                ${row
-                  .map(
-                    (cell) =>
-                      `<td class="border px-4 text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px]" title="${
-                        cell || ""
-                      }">${cell || ""}</td>`
-                  )
-                  .join("")}
-              </tr>`
+          ${row
+            .map(
+              (cell) =>
+                `<td class="border px-4 text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px]" title="${
+                  cell || ""
+                }">${cell || ""}</td>`
+            )
+            .join("")}
+        </tr>`
           )
-          .join("")}
-      </tbody>
-    </table>
-  </div>`;
+          .join("");
 
-        document.getElementById("table-container").innerHTML = table;
+        document.getElementById("table-body").innerHTML = tableBody;
       }
 
+      // Actualizar la información de la paginación
       function updatePagination(totalRows, currentPage) {
         const totalPages = Math.ceil(totalRows / rowsPerPage);
         const pageInfo = document.getElementById("pageInfo");
@@ -214,8 +244,34 @@
         };
       }
 
-      // Inicializar
-      fetchData();
+      // Llamada inicial para obtener los datos
+      async function initialize() {
+        try {
+          const response = await fetch(`/data?page=1&limit=${rowsPerPage}`);
+          const { hoja, datos, total } = await response.json();
+
+          // Mostrar el nombre de la hoja
+          document.getElementById(
+            "hojaNombre"
+          ).textContent = `Datos de la hoja: ${hoja}`;
+
+          // Renderizar solo los encabezados una vez
+          renderTableHeader(datos[0]);
+
+          // Renderizar la primera página de datos
+          renderTableBody(datos);
+
+          // Actualizar la paginación
+          updatePagination(total, 1);
+        } catch (error) {
+          console.error("Error al cargar los datos:", error);
+          document.getElementById("table-container").innerHTML =
+            '<p class="text-red-500">Error al cargar los datos.</p>';
+        }
+      }
+
+      // Llamada inicial al cargar la página
+      initialize();
     </script>
   </body>
 </html>
