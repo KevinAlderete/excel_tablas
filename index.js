@@ -58,7 +58,8 @@ app.get("/dashboard", verifyToken, (req, res) => {
 // Ruta para el Dashboard del administrador
 app.get("/users", verifyToken, (req, res) => {
   // Verificar que el usuario sea el administrador
-  if (req.user.userId !== "71976532") {
+  //console.log(req.user);
+  if (req.user.role !== "Administrador") {
     return res.redirect("/dashboard");
     //return res.status(403).json({ error: "No autorizado" });
   }
@@ -71,7 +72,7 @@ app.get("/users", verifyToken, (req, res) => {
 app.get("/users/sheets", verifyToken, async (req, res) => {
   try {
     // Verificar que el usuario sea el administrador
-    if (req.user.userId !== "71976532") {
+    if (req.user.role !== "Administrador") {
       return res.status(403).json({ error: "No autorizado" });
     }
 
@@ -98,7 +99,7 @@ app.get("/users/sheets", verifyToken, async (req, res) => {
 app.get("/users/data", verifyToken, async (req, res) => {
   try {
     // Verificar que el usuario sea el administrador
-    if (req.user.userId !== "71976532") {
+    if (req.user.role !== "Administrador") {
       return res.status(403).json({ error: "No autorizado" });
     }
 
@@ -133,7 +134,7 @@ async function getUsers() {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: "Usuarios!A2:E", // Suponiendo que la fila 1 contiene los encabezados
+    range: "Usuarios!A2:F", // Suponiendo que la fila 1 contiene los encabezados
   });
 
   return response.data.values;
@@ -153,7 +154,7 @@ app.post("/login", async (req, res) => {
       if (isPasswordValid) {
         // Crear un token JWT
         const token = jwt.sign(
-          { userId: user[2], sheet: user[4] },
+          { userId: user[2], sheet: user[4], role: user[5] },
           "secret_key",
           { expiresIn: "1h" }
         );
@@ -233,9 +234,9 @@ app.get("/data", verifyToken, async (req, res) => {
 
 // Ruta para crear usuarios (solo administradores)
 app.post("/users", verifyToken, async (req, res) => {
-  const { name, lastName, userId, password, sheet } = req.body;
+  const { name, lastName, userId, password, sheet, rol } = req.body;
 
-  if (!req.user || req.user.userId !== "71976532") {
+  if (!req.user || req.user.role !== "Administrador") {
     return res.status(403).json({ error: "No autorizado" });
   }
 
@@ -263,10 +264,10 @@ app.post("/users", verifyToken, async (req, res) => {
 
     const writeResponse = await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: "Usuarios!A2:E",
+      range: "Usuarios!A2:F",
       valueInputOption: "RAW",
       resource: {
-        values: [[name, lastName, userId, hashedPassword, sheet]],
+        values: [[name, lastName, userId, hashedPassword, sheet, rol]],
       },
     });
 
@@ -312,7 +313,7 @@ async function deleteUserFromSheet(userId) {
     // Obtener los datos de la hoja
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: "Usuarios!A2:E",
+      range: "Usuarios!A2:F",
     });
 
     const rows = response.data.values;
@@ -358,7 +359,7 @@ async function deleteUserFromSheet(userId) {
 app.delete("/users/:userId", verifyToken, async (req, res) => {
   const { userId } = req.params;
 
-  if (!req.user || req.user.userId !== "71976532") {
+  if (!req.user || req.user.role !== "Administrador") {
     return res.status(403).json({ error: "No autorizado" });
   }
 
@@ -374,7 +375,7 @@ app.delete("/users/:userId", verifyToken, async (req, res) => {
 app.get("/users/:userId", verifyToken, async (req, res) => {
   const { userId: paramUserId } = req.params;
 
-  if (!req.user || req.user.userId !== "71976532") {
+  if (!req.user || req.user.role !== "Administrador") {
     return res.status(403).json({ error: "No autorizado" });
   }
   //console.log(paramUserId);
@@ -386,7 +387,7 @@ app.get("/users/:userId", verifyToken, async (req, res) => {
     // Obtener los datos del usuario
     const readResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: "Usuarios!A2:E",
+      range: "Usuarios!A2:F",
     });
 
     const data = readResponse.data.values;
@@ -404,11 +405,58 @@ app.get("/users/:userId", verifyToken, async (req, res) => {
         lastName: user[1],
         userId: user[2],
         sheet: user[4],
+        rol: user[5],
       },
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al obtener los datos del usuario" });
+  }
+});
+
+app.put("/users/:userId", verifyToken, async (req, res) => {
+  //console.log("Datos recibidos:", req.body); // Verifica los datos que se reciben
+
+  const { name, lastName, userId, password, sheet, rol } = req.body;
+  const { userId: paramUserId } = req.params;
+
+  if (!req.user || req.user.role !== "Administrador") {
+    return res.status(403).json({ error: "No autorizado" });
+  }
+
+  try {
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: "v4", auth: client });
+
+    const readResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: "Usuarios!A2:F",
+    });
+
+    const data = readResponse.data.values;
+    const userIndex = data.findIndex((row) => row[2] === paramUserId);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const hashedPassword = password
+      ? await bcrypt.hash(password, 10)
+      : data[userIndex][3];
+
+    const writeResponse = await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `Usuarios!A${userIndex + 2}:F${userIndex + 2}`,
+      valueInputOption: "RAW",
+      resource: {
+        values: [[name, lastName, userId, hashedPassword, sheet, rol]],
+      },
+    });
+
+    res.json({ message: "Usuario actualizado correctamente" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al actualizar el usuario" });
   }
 });
 
@@ -460,80 +508,6 @@ app.get("/download-excel", verifyToken, async (req, res) => {
     res.end();
   } catch (error) {
     //console.error("Error al generar el archivo Excel:", error);
-    res.status(500).json({ error: "Error al generar el archivo Excel" });
-  }
-});
-///////////////////////////////
-
-app.get("/download-excel", verifyToken, async (req, res) => {
-  try {
-    // Obtén los usuarios y el usuario actual
-    const usuarios = await getSheetData("Usuarios");
-    const usuarioActual = usuarios.find(
-      (usuario) => usuario[2] === req.user.userId
-    );
-
-    if (!usuarioActual) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-
-    const nombreHoja = usuarioActual[4];
-    if (!nombreHoja) {
-      return res
-        .status(400)
-        .json({ error: "No se encontró un nombre de hoja para este usuario" });
-    }
-
-    // Obtén los datos de la hoja
-    const data = await getSheetData(nombreHoja);
-    console.log(data);
-
-    // Crea un nuevo archivo Excel
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(nombreHoja);
-
-    // Agrega encabezados y datos
-    if (data.length > 0) {
-      // Asegúrate de que los encabezados no tengan valores vacíos
-      const headers = data[0].map((header) => header.trim() || ""); // Eliminar espacios en blanco de los encabezados
-      worksheet.addRow(headers); // Encabezados
-
-      // Agregar las filas de datos
-      data.slice(1).forEach((row) => {
-        // Asegúrate de que cada fila tenga datos
-        const cleanRow = row.map((value) => (value ? value : ""));
-        worksheet.addRow(cleanRow); // Filas de datos
-      });
-
-      // Estiliza el encabezado (opcional)
-      worksheet.getRow(1).font = { bold: true };
-
-      // Ajusta el ancho de las columnas
-      worksheet.columns.forEach((column) => {
-        const maxLength = Math.max(
-          ...column.values.map((val) => (val ? val.toString().length : 0))
-        );
-        column.width = maxLength + 2;
-      });
-    } else {
-      console.error("Datos no válidos para escribir en Excel:", data);
-    }
-
-    // Configura la descarga
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=${nombreHoja.replace(/\s+/g, "_")}.xlsx`
-    );
-
-    // Enviar el archivo
-    await workbook.xlsx.write(res);
-    res.end();
-  } catch (error) {
-    console.error("Error al generar el archivo Excel:", error);
     res.status(500).json({ error: "Error al generar el archivo Excel" });
   }
 });

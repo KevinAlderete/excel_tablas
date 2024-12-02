@@ -128,6 +128,19 @@
                   <!-- Aquí se llenará con las opciones dinámicamente -->
                 </select>
               </div>
+              <div class="mb-4">
+                <label for="rol" class="block">Rol:</label>
+                <select
+                  id="rol"
+                  name="rol"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                >
+                  <option value="" disabled selected>Seleccione...</option>
+                  <option value="Administrador">Administrador</option>
+                  <option value="Usuario">Usuario</option>
+                </select>
+              </div>
               <button
                 type="submit"
                 class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
@@ -200,6 +213,19 @@
                   <!-- Opciones dinámicas se llenarán aquí -->
                 </select>
               </div>
+              <div class="mb-4">
+                <label for="editRol" class="block">Rol:</label>
+                <select
+                  id="editRol"
+                  name="editRol"
+                  class="w-full p-2 border border-gray-300 rounded"
+                  required
+                >
+                  <option value="" disabled selected>Seleccione...</option>
+                  <option value="Administrador">Administrador</option>
+                  <option value="Usuario">Usuario</option>
+                </select>
+              </div>
               <button
                 type="submit"
                 class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
@@ -216,7 +242,7 @@
 
       <!-- Footer -->
       <footer class="bg-gray-800 text-white p-4 text-center">
-        &copy; 2024 Tu Empresa
+        &copy; 2024 IMPLEMENTACIÓN - SIFODS
       </footer>
     </div>
 
@@ -239,6 +265,7 @@
           const userId = document.getElementById("userId").value;
           const password = document.getElementById("password").value;
           const sheet = document.getElementById("sheet").value;
+          const rol = document.getElementById("rol").value;
 
           // Verificar si el token está presente
           if (!token) {
@@ -253,7 +280,14 @@
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ lastName, name, userId, password, sheet }),
+            body: JSON.stringify({
+              lastName,
+              name,
+              userId,
+              password,
+              sheet,
+              rol,
+            }),
           });
 
           if (response.ok) {
@@ -264,6 +298,7 @@
               confirmButtonText: "Aceptar",
             });
             closeModal(); // Cerrar el modal después de enviar el formulario
+            fetchUserData();
           } else {
             const error = await response.json();
             showErrorModal(error.error || "Error al crear el usuario");
@@ -559,6 +594,7 @@
             document.getElementById("editUserId").value =
               data.user.userId || "";
             document.getElementById("editSheet").value = data.user.sheet || "";
+            document.getElementById("editRol").value = data.user.Rol || "";
 
             // Abrir el modal
             document.getElementById("editUserModal").classList.remove("hidden");
@@ -595,6 +631,7 @@
         const name = document.getElementById("editName").value;
         const lastName = document.getElementById("editLastName").value;
         const sheet = document.getElementById("editSheet").value;
+        const rol = document.getElementById("editRol").value;
         const password = document.getElementById("editPassword").value;
 
         try {
@@ -605,7 +642,14 @@
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ name, lastName, userId, sheet, password }),
+            body: JSON.stringify({
+              name,
+              lastName,
+              userId,
+              sheet,
+              password,
+              rol,
+            }),
           });
 
           if (!response.ok) {
