@@ -29,7 +29,7 @@ const auth = new google.auth.GoogleAuth({
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const spreadsheetId = "1602X1we3TI5KbVnqNKB9ZgF_4qfmcv06vup9JeSuINU";
+const spreadsheetId = "12XREUejy7VS2lGGaQA0keBcbYxquxB-nUS8s4qHha1w";
 
 // Middleware
 app.use(express.json());
@@ -210,21 +210,9 @@ app.get("/data", verifyToken, async (req, res) => {
 
     const data = await getSheetData(nombreHoja);
 
-    // Parámetros de paginación
-    const page = parseInt(req.query.page) || 1; // Página actual (por defecto 1)
-    const limit = parseInt(req.query.limit) || 10; // Límite de filas por página (por defecto 10)
-    const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
-
-    // Dividir los datos según la paginación
-    const paginatedData = data.slice(startIndex, endIndex);
-
     res.json({
       hoja: nombreHoja,
-      datos: paginatedData,
-      total: data.length, // Total de filas disponibles
-      page,
-      limit,
+      datos: data, // Enviar todos los datos sin paginar
     });
   } catch (error) {
     console.error("Error al cargar datos:", error);
@@ -460,7 +448,7 @@ app.put("/users/:userId", verifyToken, async (req, res) => {
   }
 });
 
-app.get("/download-excel", verifyToken, async (req, res) => {
+/*app.get("/download-excel", verifyToken, async (req, res) => {
   try {
     // Obtén los usuarios y el usuario actual
     const usuarios = await getSheetData("Usuarios");
@@ -510,7 +498,7 @@ app.get("/download-excel", verifyToken, async (req, res) => {
     //console.error("Error al generar el archivo Excel:", error);
     res.status(500).json({ error: "Error al generar el archivo Excel" });
   }
-});
+});*/
 
 // Iniciar el servidor
 app.listen(PORT, () => {

@@ -6,6 +6,70 @@
     <title>Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.css"
+    />
+    <!-- <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/searchpanes/2.3.3/css/searchPanes.bootstrap5.css"
+    /> -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/select/2.1.0/css/select.bootstrap5.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.bootstrap5.css"
+    />
+    <style>
+      /* Ajuste para scroll horizontal */
+      .dataTables_wrapper {
+        overflow-x: auto;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      /* Columnas truncadas */
+      table.dataTable tbody td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 350px;
+      }
+
+      /* Alternancia de color en filas */
+      table.dataTable tbody tr:nth-child(odd) {
+        background-color: #f9f9f9;
+      }
+      table.dataTable tbody tr:nth-child(even) {
+        background-color: #ffffff;
+      }
+
+      /* Estilo de encabezados */
+      table.dataTable thead th {
+        white-space: nowrap; /* Evita que el texto se parta */
+        overflow: hidden; /* Oculta el texto desbordado */
+        text-overflow: ellipsis; /* Agrega puntos suspensivos */
+        max-width: 350px; /* Ajusta el ancho máximo */
+        text-align: center;
+      }
+
+      /* Personalización del filtro y búsqueda */
+      .dataTables_filter input {
+        border: 1px solid #007bff;
+        border-radius: 5px;
+        padding: 5px;
+        margin-left: 5px;
+      }
+      .dataTables_filter label {
+        font-weight: bold;
+      }
+    </style>
   </head>
   <body class="">
     <div
@@ -40,30 +104,26 @@
 
       <!-- Main Content -->
       <main class="flex-1 p-6">
-        <button
+        <!-- <button
           id="download-btn"
           class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-400"
         >
           Descargar Excel
-        </button>
-        <h2 id="hojaNombre" class="text-2xl font-semibold mb-4">Cargando...</h2>
-        <div id="table-container" class="space-y-4 overflow-auto">
-          <!-- Los datos del usuario se cargarán aquí -->
-        </div>
-        <div class="flex justify-between items-center mt-4">
-          <button
-            id="prevPage"
-            class="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-          >
-            Anterior
-          </button>
-          <span id="pageInfo"></span>
-          <button
-            id="nextPage"
-            class="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-          >
-            Siguiente
-          </button>
+        </button> -->
+        <div class="container mt-5">
+          <h2 id="hojaNombre">Cargando...</h2>
+          <div class="">
+            <table
+              id="example"
+              class="table table-striped table-bordered"
+              style="width: 100%"
+            >
+              <thead>
+                <tr id="tableHeader"></tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
         </div>
       </main>
 
@@ -72,9 +132,24 @@
         &copy; 2024 IMPLEMENTACIÓN - SIFODS
       </footer>
     </div>
-
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.bootstrap5.js"></script>
+    <script src="https://cdn.datatables.net/searchpanes/2.3.3/js/dataTables.searchPanes.js"></script>
+    <script src="https://cdn.datatables.net/searchpanes/2.3.3/js/searchPanes.bootstrap5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/select/2.1.0/js/dataTables.select.js"></script>
+    <script src="https://cdn.datatables.net/select/2.1.0/js/select.bootstrap5.js"></script>
     <script>
-      document.getElementById("download-btn").addEventListener("click", () => {
+      /*document.getElementById("download-btn").addEventListener("click", () => {
         // Mostrar el loader
         const loader = document.getElementById("loader");
         loader.classList.remove("hidden");
@@ -114,7 +189,7 @@
             console.error("Error al descargar el archivo:", error);
             alert("Hubo un problema al descargar el archivo");
           });
-      });
+      });*/
 
       // Función para mostrar el modal de error con SweetAlert2
       function showErrorModal(message) {
@@ -131,147 +206,139 @@
         window.location.href = "/"; // Redirige al login
       });
 
-      let currentPage = 1;
-      const rowsPerPage = 10; // Cambia según tu preferencia
-
-      // Cargar datos de la API
-      async function fetchData(page = 1) {
+      // Obtener los datos de la API y actualizar la tabla
+      async function fetchData() {
+        // Mostrar el loader
+        const loader = document.getElementById("loader");
+        loader.classList.remove("hidden");
         try {
-          const response = await fetch(
-            `/data?page=${page}&limit=${rowsPerPage}`
-          );
-          const { hoja, datos, total } = await response.json();
+          const response = await fetch("/data");
+          const { hoja, datos } = await response.json();
 
           // Mostrar el nombre de la hoja
           document.getElementById(
             "hojaNombre"
           ).textContent = `Datos de la hoja: ${hoja}`;
 
-          // Actualizar tabla (solo el cuerpo de la tabla)
-          renderTableBody(datos);
+          if (!datos || datos.length === 0) {
+            console.warn("No hay datos disponibles para mostrar.");
+            document.getElementById("tableBody").innerHTML =
+              "<tr><td colspan='100%'>No hay datos disponibles</td></tr>";
+            return;
+          }
 
-          // Actualizar información de paginación
-          updatePagination(total, page);
+          // Configurar encabezados dinámicos
+          const headers = datos[0]; // Primera fila como encabezados
+          const headerRow = headers
+            .map((header) => `<th>${header}</th>`)
+            .join("");
+          document.getElementById("tableHeader").innerHTML = headerRow;
+
+          // Configurar cuerpo de la tabla
+          const tableBody = datos
+            .slice(1) // Excluir la primera fila si son encabezados
+            .map((row) => {
+              const cells = row
+                .map((cell) => `<td>${cell || ""}</td>`)
+                .join("");
+              return `<tr>${cells}</tr>`;
+            })
+            .join("");
+          document.getElementById("tableBody").innerHTML = tableBody;
+
+          // Verificar si DataTable ya está inicializado
+          const tableElement = $("#example");
+          if ($.fn.DataTable.isDataTable(tableElement)) {
+            tableElement.DataTable().destroy(); // Destruir DataTable existente
+          }
+
+          // Inicializar DataTables con SearchPanes
+          tableElement.DataTable({
+            paging: true, // Activar paginación
+            searching: true, // Activar búsqueda
+            ordering: false, // Desactivar ordenamiento
+            scrollX: true, // Habilitar scroll horizontal
+            //autoWidth: false, // Deshabilitar ajuste automático de ancho de columna
+            dom: "Bfrtip", // Activar SearchPanes (P) y configurar el layout
+            //dom: "Plfrtip", // Activar SearchPanes (P) y configurar el layout
+            buttons: [
+              {
+                extend: "excelHtml5",
+                text: "Exportar a Excel",
+                className: "btn btn-success", // Clase Bootstrap para estilos
+                exportOptions: {
+                  columns: ":visible", // Exportar solo columnas visibles
+                },
+              },
+              {
+                extend: "pdfHtml5",
+                text: "Exportar a PDF",
+                className: "btn btn-danger",
+                orientation: "landscape", // Orientación horizontal
+                pageSize: "A4", // Tamaño de página
+                exportOptions: {
+                  columns: ":visible",
+                },
+              },
+              {
+                extend: "csvHtml5",
+                text: "Exportar a CSV",
+                className: "btn btn-primary",
+                exportOptions: {
+                  columns: ":visible",
+                },
+              },
+              {
+                extend: "print",
+                text: "Imprimir",
+                className: "btn btn-secondary",
+                exportOptions: {
+                  columns: ":visible",
+                },
+              },
+              {
+                extend: "colvis",
+                text: "Mostrar/Ocultar Columnas",
+                className: "btn btn-info",
+                postfixButtons: ["colvisRestore"],
+              },
+            ],
+            //searchPanes: {
+            //  cascadePanes: false, // Habilitar cascada en los filtros
+            //  layout: "columns-2", // Mostrar los panes en 2 columnas
+            //  initCollapsed: true, // Iniciar los panes colapsados
+            //  dtOpts: {
+            //    deferRender: true, // Carga diferida
+            //  },
+            //},
+            //columnDefs: [
+            //  { searchPanes: { show: true }, targets: [7, 10] }, // Mostrar SearchPanes en columnas específicas
+            //  { searchPanes: { show: false }, targets: "_all" }, // Ocultar en otras columnas
+            //],
+            language: {
+              processing: "Cargando datos...", // Mensaje para el indicador de carga
+              search: "Buscar:", // Etiqueta del cuadro de búsqueda
+              lengthMenu: "Mostrar _MENU_ entradas",
+              info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+              infoEmpty: "No hay datos disponibles",
+              infoFiltered: "(filtrado de _MAX_ entradas totales)",
+              paginate: {
+                first: "Primero",
+                last: "Último",
+                next: "Siguiente",
+                previous: "Anterior",
+              },
+            },
+          });
+          // Ocultar el loader
+          loader.classList.add("hidden");
         } catch (error) {
           console.error("Error al cargar datos:", error);
-          document.getElementById("table-container").innerHTML =
-            '<p class="text-red-500">Error al cargar los datos.</p>';
         }
       }
 
-      // Renderizar encabezado una sola vez
-      function renderTableHeader(headers) {
-        const tableHeader = `
-    <div class="overflow-x-auto">
-      <table class="min-w-full table-auto border-collapse border border-gray-300">
-        <thead>
-          <tr class="bg-gray-800 text-white text-left text-sm leading-tight">
-            ${headers
-              .map(
-                (header) =>
-                  `<th class="border px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px] hover:bg-gray-700" title="${header}">${header}</th>`
-              )
-              .join("")}
-          </tr>
-        </thead>
-        <tbody class="text-sm text-gray-700" id="table-body">
-          <!-- Cuerpo de la tabla que se actualizará dinámicamente -->
-        </tbody>
-      </table>
-    </div>
-  `;
-
-        document.getElementById("table-container").innerHTML = tableHeader;
-      }
-
-      // Renderizar el cuerpo de la tabla
-      function renderTableBody(data) {
-        if (!data || !data.length) {
-          document.getElementById("table-body").innerHTML =
-            '<tr><td colspan="100%" class="text-center">No hay datos disponibles.</td></tr>';
-          return;
-        }
-
-        const tableBody = data
-          .slice(0, rowsPerPage) // Limitar los datos a la página actual
-          .map(
-            (row, index) =>
-              `<tr class="${
-                index % 2 === 0 ? "bg-gray-100" : "bg-white"
-              } hover:bg-gray-200 transition-all duration-150">
-          ${row
-            .map(
-              (cell) =>
-                `<td class="border px-4 text-center py-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[300px]" title="${
-                  cell || ""
-                }">${cell || ""}</td>`
-            )
-            .join("")}
-        </tr>`
-          )
-          .join("");
-
-        document.getElementById("table-body").innerHTML = tableBody;
-      }
-
-      // Actualizar la información de la paginación
-      function updatePagination(totalRows, currentPage) {
-        const totalPages = Math.ceil(totalRows / rowsPerPage);
-        const pageInfo = document.getElementById("pageInfo");
-        const prevButton = document.getElementById("prevPage");
-        const nextButton = document.getElementById("nextPage");
-
-        // Actualizar texto de paginación
-        pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
-
-        // Habilitar/deshabilitar botones según la página
-        prevButton.disabled = currentPage <= 1;
-        nextButton.disabled = currentPage >= totalPages;
-
-        // Asignar eventos a los botones
-        prevButton.onclick = () => {
-          if (currentPage > 1) {
-            currentPage -= 1;
-            fetchData(currentPage);
-          }
-        };
-
-        nextButton.onclick = () => {
-          if (currentPage < totalPages) {
-            currentPage += 1;
-            fetchData(currentPage);
-          }
-        };
-      }
-
-      // Llamada inicial para obtener los datos
-      async function initialize() {
-        try {
-          const response = await fetch(`/data?page=1&limit=${rowsPerPage}`);
-          const { hoja, datos, total } = await response.json();
-
-          // Mostrar el nombre de la hoja
-          document.getElementById(
-            "hojaNombre"
-          ).textContent = `Datos de la hoja: ${hoja}`;
-
-          // Renderizar solo los encabezados una vez
-          renderTableHeader(datos[0]);
-
-          // Renderizar la primera página de datos
-          renderTableBody(datos);
-
-          // Actualizar la paginación
-          updatePagination(total, 1);
-        } catch (error) {
-          console.error("Error al cargar los datos:", error);
-          document.getElementById("table-container").innerHTML =
-            '<p class="text-red-500">Error al cargar los datos.</p>';
-        }
-      }
-
-      // Llamada inicial al cargar la página
-      initialize();
+      // Llamar a la función al cargar la página
+      document.addEventListener("DOMContentLoaded", fetchData);
     </script>
   </body>
 </html>
