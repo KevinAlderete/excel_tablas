@@ -19,5 +19,8 @@
     "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.16"
   }
 }

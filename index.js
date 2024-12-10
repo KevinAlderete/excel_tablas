@@ -448,58 +448,6 @@ app.put("/users/:userId", verifyToken, async (req, res) => {
   }
 });
 
-/*app.get("/download-excel", verifyToken, async (req, res) => {
-  try {
-    // Obtén los usuarios y el usuario actual
-    const usuarios = await getSheetData("Usuarios");
-    const usuarioActual = usuarios.find(
-      (usuario) => usuario[2] === req.user.userId
-    );
-
-    if (!usuarioActual) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-
-    const nombreHoja = usuarioActual[4];
-    if (!nombreHoja) {
-      return res
-        .status(400)
-        .json({ error: "No se encontró un nombre de hoja para este usuario" });
-    }
-
-    // Obtén los datos de la hoja
-    const data = await getSheetData(nombreHoja);
-    //console.log(data);
-
-    if (!data || data.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "No se encontraron datos para la hoja" });
-    }
-
-    // Crear un nuevo libro de trabajo
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(nombreHoja);
-
-    // Agregar los datos al archivo Excel
-    worksheet.addRows(data);
-
-    // Configurar la descarga
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader("Content-Disposition", `attachment; filename=archivo.xlsx`);
-
-    // Escribir el archivo Excel a la respuesta HTTP
-    await workbook.xlsx.write(res);
-    res.end();
-  } catch (error) {
-    //console.error("Error al generar el archivo Excel:", error);
-    res.status(500).json({ error: "Error al generar el archivo Excel" });
-  }
-});*/
-
 // Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);

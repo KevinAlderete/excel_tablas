@@ -14,10 +14,6 @@
       rel="stylesheet"
       href="https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.css"
     />
-    <!-- <link
-      rel="stylesheet"
-      href="https://cdn.datatables.net/searchpanes/2.3.3/css/searchPanes.bootstrap5.css"
-    /> -->
     <link
       rel="stylesheet"
       href="https://cdn.datatables.net/select/2.1.0/css/select.bootstrap5.css"
@@ -87,7 +83,7 @@
         class="flex items-center justify-between px-6 py-4 bg-background border-b w-full"
       >
         <div class="flex justify-between items-center w-full">
-          <h1 class="text-2xl font-bold">Bienvenido al Dashboard</h1>
+          <h1 class="text-xl font-bold">Bienvenido</h1>
           <div className="flex items-center space-x-4">
             <a href="/users" class="hover:font-bold hover:underline py-2 px-4"
               >Usuarios</a
@@ -103,15 +99,18 @@
       </header>
 
       <!-- Main Content -->
-      <main class="flex-1 p-6">
+      <main class="flex-1 p-2">
         <!-- <button
-          id="download-btn"
-          class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-400"
+          id="showReport"
+          class="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#reportContainer"
         >
-          Descargar Excel
+          Ver Reporte
         </button> -->
-        <div class="container mt-5">
-          <h2 id="hojaNombre">Cargando...</h2>
+
+        <div class="container mt-2">
+          <h2 id="hojaNombre" class="font-bold pb-3">Cargando...</h2>
           <div class="">
             <table
               id="example"
@@ -125,10 +124,45 @@
             </table>
           </div>
         </div>
+        <!-- <div
+          class="modal fade"
+          id="reportContainer"
+          tabindex="-1"
+          aria-labelledby="reportModalLabel"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="reportModalLabel">
+                  Reporte de Estados
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div class="modal-body">
+                <table class="table">
+                  <thead>
+                    <tr id="stateHeaders">
+                      //Cabeceras dinámicas 
+                    </tr>
+                  </thead>
+                  <tbody id="reportBody">
+                    // Reporte generado dinámicamente 
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div> -->
       </main>
 
       <!-- Footer -->
-      <footer class="bg-gray-800 text-white p-4 text-center">
+      <footer class="bg-gray-800 text-white py-3 text-center">
         &copy; 2024 IMPLEMENTACIÓN - SIFODS
       </footer>
     </div>
@@ -148,197 +182,6 @@
     <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js"></script>
     <script src="https://cdn.datatables.net/select/2.1.0/js/dataTables.select.js"></script>
     <script src="https://cdn.datatables.net/select/2.1.0/js/select.bootstrap5.js"></script>
-    <script>
-      /*document.getElementById("download-btn").addEventListener("click", () => {
-        // Mostrar el loader
-        const loader = document.getElementById("loader");
-        loader.classList.remove("hidden");
-        const token = localStorage.getItem("token");
-        fetch("/download-excel", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`, // Reemplaza 'yourToken' con el token real de autenticación
-          },
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("No se pudo descargar el archivo");
-            }
-            // Crear un objeto Blob con la respuesta (el archivo Excel)
-            return response.blob();
-          })
-          .then((blob) => {
-            // Crear un enlace temporal para descargar el archivo
-            const link = document.createElement("a");
-            const url = window.URL.createObjectURL(blob);
-            link.href = url;
-            link.download = "archivo.xlsx"; // Nombre del archivo a descargar
-            link.click();
-            // Liberar el objeto URL creado
-            window.URL.revokeObjectURL(url);
-            // Ocultar el loader
-            loader.classList.add("hidden");
-            Swal.fire({
-              title: "Éxito",
-              text: "Excel descargado.",
-              icon: "success",
-              confirmButtonText: "Aceptar",
-            });
-          })
-          .catch((error) => {
-            console.error("Error al descargar el archivo:", error);
-            alert("Hubo un problema al descargar el archivo");
-          });
-      });*/
-
-      // Función para mostrar el modal de error con SweetAlert2
-      function showErrorModal(message) {
-        Swal.fire({
-          title: "Error",
-          text: message,
-          icon: "error",
-          confirmButtonText: "Cerrar",
-        });
-      }
-      // Función para cerrar sesión
-      document.getElementById("logoutButton").addEventListener("click", () => {
-        localStorage.removeItem("token"); // Elimina el token
-        window.location.href = "/"; // Redirige al login
-      });
-
-      // Obtener los datos de la API y actualizar la tabla
-      async function fetchData() {
-        // Mostrar el loader
-        const loader = document.getElementById("loader");
-        loader.classList.remove("hidden");
-        try {
-          const response = await fetch("/data");
-          const { hoja, datos } = await response.json();
-
-          // Mostrar el nombre de la hoja
-          document.getElementById(
-            "hojaNombre"
-          ).textContent = `Datos de la hoja: ${hoja}`;
-
-          if (!datos || datos.length === 0) {
-            console.warn("No hay datos disponibles para mostrar.");
-            document.getElementById("tableBody").innerHTML =
-              "<tr><td colspan='100%'>No hay datos disponibles</td></tr>";
-            return;
-          }
-
-          // Configurar encabezados dinámicos
-          const headers = datos[0]; // Primera fila como encabezados
-          const headerRow = headers
-            .map((header) => `<th>${header}</th>`)
-            .join("");
-          document.getElementById("tableHeader").innerHTML = headerRow;
-
-          // Configurar cuerpo de la tabla
-          const tableBody = datos
-            .slice(1) // Excluir la primera fila si son encabezados
-            .map((row) => {
-              const cells = row
-                .map((cell) => `<td>${cell || ""}</td>`)
-                .join("");
-              return `<tr>${cells}</tr>`;
-            })
-            .join("");
-          document.getElementById("tableBody").innerHTML = tableBody;
-
-          // Verificar si DataTable ya está inicializado
-          const tableElement = $("#example");
-          if ($.fn.DataTable.isDataTable(tableElement)) {
-            tableElement.DataTable().destroy(); // Destruir DataTable existente
-          }
-
-          // Inicializar DataTables con SearchPanes
-          tableElement.DataTable({
-            paging: true, // Activar paginación
-            searching: true, // Activar búsqueda
-            ordering: false, // Desactivar ordenamiento
-            scrollX: true, // Habilitar scroll horizontal
-            //autoWidth: false, // Deshabilitar ajuste automático de ancho de columna
-            dom: "Bfrtip", // Activar SearchPanes (P) y configurar el layout
-            //dom: "Plfrtip", // Activar SearchPanes (P) y configurar el layout
-            buttons: [
-              {
-                extend: "excelHtml5",
-                text: "Exportar a Excel",
-                className: "btn btn-success", // Clase Bootstrap para estilos
-                exportOptions: {
-                  columns: ":visible", // Exportar solo columnas visibles
-                },
-              },
-              {
-                extend: "pdfHtml5",
-                text: "Exportar a PDF",
-                className: "btn btn-danger",
-                orientation: "landscape", // Orientación horizontal
-                pageSize: "A4", // Tamaño de página
-                exportOptions: {
-                  columns: ":visible",
-                },
-              },
-              {
-                extend: "csvHtml5",
-                text: "Exportar a CSV",
-                className: "btn btn-primary",
-                exportOptions: {
-                  columns: ":visible",
-                },
-              },
-              {
-                extend: "print",
-                text: "Imprimir",
-                className: "btn btn-secondary",
-                exportOptions: {
-                  columns: ":visible",
-                },
-              },
-              {
-                extend: "colvis",
-                text: "Mostrar/Ocultar Columnas",
-                className: "btn btn-info",
-                postfixButtons: ["colvisRestore"],
-              },
-            ],
-            //searchPanes: {
-            //  cascadePanes: false, // Habilitar cascada en los filtros
-            //  layout: "columns-2", // Mostrar los panes en 2 columnas
-            //  initCollapsed: true, // Iniciar los panes colapsados
-            //  dtOpts: {
-            //    deferRender: true, // Carga diferida
-            //  },
-            //},
-            //columnDefs: [
-            //  { searchPanes: { show: true }, targets: [7, 10] }, // Mostrar SearchPanes en columnas específicas
-            //  { searchPanes: { show: false }, targets: "_all" }, // Ocultar en otras columnas
-            //],
-            language: {
-              processing: "Cargando datos...", // Mensaje para el indicador de carga
-              search: "Buscar:", // Etiqueta del cuadro de búsqueda
-              lengthMenu: "Mostrar _MENU_ entradas",
-              info: "Mostrando _START_ a _END_ de _TOTAL_ entradas",
-              infoEmpty: "No hay datos disponibles",
-              infoFiltered: "(filtrado de _MAX_ entradas totales)",
-              paginate: {
-                first: "Primero",
-                last: "Último",
-                next: "Siguiente",
-                previous: "Anterior",
-              },
-            },
-          });
-          // Ocultar el loader
-          loader.classList.add("hidden");
-        } catch (error) {
-          console.error("Error al cargar datos:", error);
-        }
-      }
-
-      // Llamar a la función al cargar la página
-      document.addEventListener("DOMContentLoaded", fetchData);
-    </script>
+    <script src="js/dashboard.js"></script>
   </body>
 </html>

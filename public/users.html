@@ -36,7 +36,7 @@
         class="flex items-center justify-between px-6 py-4 bg-background border-b w-full"
       >
         <div class="flex justify-between items-center w-full">
-          <h1 class="text-2xl font-bold">Panel de administración</h1>
+          <h1 class="text-xl font-bold">Panel de administración</h1>
           <div className="flex items-center space-x-4">
             <a
               href="/dashboard"
@@ -55,14 +55,17 @@
 
       <!-- Main Content -->
       <main class="flex-grow p-6">
-        <h2 class="text-xl mb-4">Gestión de Usuarios</h2>
-        <!-- Botón para abrir el modal -->
-        <button
-          onclick="openModal()"
-          class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-        >
-          Crear Nuevo Usuario
-        </button>
+        <div class="flex justify-between">
+          <h2 class="text-xl mb-4">Gestión de Usuarios</h2>
+          <!-- Botón para abrir el modal -->
+          <button
+            onclick="openModal()"
+            class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+          >
+            Nuevo Usuario
+          </button>
+        </div>
+
         <div id="table-container" class="space-y-4">
           <!-- Aquí se mostrarán los usuarios existentes -->
         </div>
@@ -72,9 +75,9 @@
           id="createUserModal"
           class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden"
         >
-          <div class="bg-white p-6 rounded-lg w-96">
+          <div class="bg-white p-6 rounded-lg w-fit">
             <h3 class="text-xl font-semibold mb-4">Crear Nuevo Usuario</h3>
-            <form id="createUserForm">
+            <form id="createUserForm" class="grid grid-cols-2 gap-3">
               <div class="mb-4">
                 <label for="name" class="block">Nombres:</label>
                 <input
@@ -141,16 +144,21 @@
                   <option value="Usuario">Usuario</option>
                 </select>
               </div>
-              <button
-                type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-              >
-                Crear Usuario
-              </button>
+              <div class="flex justify-end gap-3 col-span-2 items-center">
+                <span
+                  onclick="closeModal()"
+                  class="text-red-600 cursor-pointer py-2 px-4 hover:underline"
+                >
+                  Cerrar
+                </span>
+                <button
+                  type="submit"
+                  class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+                >
+                  Crear Usuario
+                </button>
+              </div>
             </form>
-            <button onclick="closeModal()" class="mt-4 text-red-600">
-              Cerrar
-            </button>
           </div>
         </div>
 
@@ -159,9 +167,9 @@
           id="editUserModal"
           class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden"
         >
-          <div class="bg-white p-6 rounded-lg w-96">
+          <div class="bg-white p-6 rounded-lg w-fit">
             <h3 class="text-xl font-semibold mb-4">Editar Usuario</h3>
-            <form id="editUserForm">
+            <form id="editUserForm" class="grid grid-cols-2 gap-3">
               <div class="mb-4">
                 <label for="editName" class="block">Nombres:</label>
                 <input
@@ -226,16 +234,21 @@
                   <option value="Usuario">Usuario</option>
                 </select>
               </div>
-              <button
-                type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-              >
-                Actualizar Usuario
-              </button>
+              <div class="flex justify-end gap-3 col-span-2 items-center">
+                <span
+                  onclick="closeEditModal()"
+                  class="text-red-600 cursor-pointer py-2 px-4 hover:underline"
+                >
+                  Cerrar
+                </span>
+                <button
+                  type="submit"
+                  class="bg-blue-600 hover:bg-blue-800 text-white py-2 px-4 rounded"
+                >
+                  Actualizar Usuario
+                </button>
+              </div>
             </form>
-            <button onclick="closeEditModal()" class="mt-4 text-red-600">
-              Cerrar
-            </button>
           </div>
         </div>
       </main>
