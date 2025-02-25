@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const ExcelJS = require("exceljs");
 const XLSX = require("xlsx");
+const MongoStore = require("connect-mongo");
 require("dotenv").config();
 const session = require("express-session");
 
@@ -38,7 +39,12 @@ app.use(
   session({
     secret: "secret_key",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl:
+        "mongodb+srv://kevin24alderete:kevin123@cluster0.2vd6f.mongodb.net/session_sifods",
+      ttl: 14 * 24 * 60 * 60,
+    }),
   })
 );
 
