@@ -42,7 +42,7 @@ app.use(
     saveUninitialized: false,
     store: MongoStore.create({
       mongoUrl:
-        "mongodb+srv://kevin24alderete:kevin123@cluster0.2vd6f.mongodb.net/session_sifods",
+        process.env.KEY_MONGO_DB,
       ttl: 14 * 24 * 60 * 60,
     }),
   })
