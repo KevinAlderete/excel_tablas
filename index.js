@@ -11,7 +11,7 @@ require("dotenv").config();
 const session = require("express-session");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Ruta al archivo de credenciales
 // Escribir el archivo temporalmente
